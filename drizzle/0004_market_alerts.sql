@@ -1,0 +1,3 @@
+CREATE TABLE IF NOT EXISTS market_alerts (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, market_id TEXT NOT NULL REFERENCES markets(id) ON DELETE CASCADE, direction TEXT NOT NULL CHECK (direction IN ('above','below')), threshold INTEGER NOT NULL CHECK (threshold BETWEEN 1 AND 99), is_active INTEGER NOT NULL DEFAULT 1, triggered_at INTEGER, created_at INTEGER NOT NULL);
+CREATE INDEX IF NOT EXISTS idx_market_alerts_user ON market_alerts(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_market_alerts_market_active ON market_alerts(market_id, is_active);

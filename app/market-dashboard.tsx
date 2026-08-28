@@ -55,7 +55,7 @@ export default function MarketDashboard() {
     if (!response.ok) throw new Error("Unable to load markets");
     const payload = (await response.json()) as MarketPayload;
     setData(payload);
-    setSelectedId((current) => current || payload.markets[0]?.id || "");
+    const linkedMarket = new URLSearchParams(window.location.search).get("market"); setSelectedId((current) => current || payload.markets.find((market) => market.id === linkedMarket)?.id || payload.markets[0]?.id || "");
   }, []);
 
   useEffect(() => {
@@ -408,3 +408,4 @@ function tomorrow() {
 function nextMonth() {
   return new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10);
 }
+

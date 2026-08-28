@@ -1,4 +1,5 @@
 import { env } from "cloudflare:workers";
+import { processMarketAlerts } from "@/db/market-alerts";
 
 export type MarketRecord = {
   id: string; slug: string; title: string; description: string; category: string;
@@ -110,6 +111,7 @@ export async function insertTrade(input: { marketId: string; side: "YES" | "NO";
     database.prepare("UPDATE markets SET yes_price=?, volume=volume+?, liquidity=liquidity+?, trader_count=trader_count+1 WHERE id=?").bind(nextYes, amountCents, Math.round(amountCents / 2), input.marketId),
     database.prepare("INSERT INTO trades (id,market_id,side,amount,shares,price,trader_alias,created_at,user_id) VALUES (?,?,?,?,?,?,?,?,?)").bind(id, input.marketId, input.side, amountCents, shares, executionPrice, alias, createdAt, input.userId),
   ]);
+  await processMarketAlerts(input.marketId, nextYes);
   const updated = (await database.prepare("SELECT * FROM markets WHERE id=?").bind(input.marketId).first<MarketRow>())!;
   return { market: mapMarket(updated), activity: mapTrade({ id, market_id: input.marketId, market_title: row.title, side: input.side, amount: amountCents, shares, price: executionPrice, trader_alias: alias, created_at: createdAt }) };
 }
