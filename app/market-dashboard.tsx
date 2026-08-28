@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { startAuthentication, startRegistration } from "@simplewebauthn/browser";
 import ProductHub from "./product-hub";
 
 type Market = {
@@ -60,6 +61,10 @@ export default function MarketDashboard() {
   useEffect(() => {
     loadMarkets().catch(() => setNotice("The market feed is temporarily unavailable.")).finally(() => setLoading(false));
     fetch("/api/auth/me", { cache: "no-store" }).then((response) => response.json()).then((session: { user: User | null; positions: Position[]; balance: number }) => { setUser(session.user); setPortfolio(session.positions); setAccountBalance(session.balance); }).catch(() => setNotice("Account status could not be loaded."));
+    const query = new URLSearchParams(window.location.search); const oauthError = query.get("authError");
+    if (oauthError) { setAuthError(oauthError); setAuthOpen(true); }
+    if (query.get("auth") === "google") setNotice("Signed in securely with Google.");
+    if (oauthError || query.has("auth")) window.history.replaceState({}, "", window.location.pathname);
   }, [loadMarkets]);
 
   const visibleMarkets = useMemo(() => {
@@ -211,6 +216,24 @@ export default function MarketDashboard() {
     setUser(null); setPortfolio([]); setAccountBalance(10_000); setDialog(null); setNotice("You have signed out.");
   }
 
+  async function usePasskey() {
+    setAuthSubmitting(true); setAuthError("");
+    try {
+      if (user) {
+        const optionsResponse = await fetch("/api/auth/passkey/register/options", { method: "POST" }); const options = await optionsResponse.json(); if (!optionsResponse.ok) throw new Error(options.error);
+        const credential = await startRegistration({ optionsJSON: options });
+        const verifyResponse = await fetch("/api/auth/passkey/register/verify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(credential) }); const result = await verifyResponse.json(); if (!verifyResponse.ok || !result.verified) throw new Error(result.error || "Passkey setup failed");
+        setNotice("Passkey added. You can now sign in with Face ID, Touch ID, Windows Hello, or your device PIN.");
+      } else {
+        const optionsResponse = await fetch("/api/auth/passkey/authenticate/options", { method: "POST" }); const options = await optionsResponse.json(); if (!optionsResponse.ok) throw new Error(options.error);
+        const credential = await startAuthentication({ optionsJSON: options });
+        const verifyResponse = await fetch("/api/auth/passkey/authenticate/verify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(credential) }); const result = await verifyResponse.json(); if (!verifyResponse.ok || !result.verified) throw new Error(result.error || "Passkey login failed");
+        const session = await fetch("/api/auth/me", { cache: "no-store" }).then((item) => item.json()) as { user: User; positions: Position[]; balance: number }; setUser(session.user); setPortfolio(session.positions ?? []); setAccountBalance(session.balance); setAuthOpen(false); setNotice("Signed in with your passkey.");
+      }
+    } catch (error) { const message = error instanceof Error && error.name === "NotAllowedError" ? "Passkey request was cancelled or timed out." : error instanceof Error ? error.message : "Passkey request failed"; if (user) setNotice(message); else setAuthError(message); }
+    finally { setAuthSubmitting(false); }
+  }
+
   return (
     <main className="app-shell">
       <header className="topbar">
@@ -326,12 +349,12 @@ export default function MarketDashboard() {
         <div className="modal-backdrop" onMouseDown={() => setDialog(null)}>
           <section className="info-modal" onMouseDown={(event) => event.stopPropagation()}>
             <div className="modal-head"><div><p className="eyebrow">{dialog === "activity" ? "DATABASE FEED" : "LOCAL DEMO ACCOUNT"}</p><h2>{dialog === "activity" ? "Recent market activity." : "Your simulated positions."}</h2></div><button onClick={() => setDialog(null)}>×</button></div>
-            {dialog === "activity" ? <div className="activity-table">{data.activity.length ? data.activity.map((trade) => <div className="activity-detail" key={trade.id}><i className={trade.side === "YES" ? "buy" : "sell"} /><span><b>{trade.traderAlias} bought {trade.side}</b><small>{trade.marketTitle}</small></span><strong>{formatUsd(trade.amount)}</strong><time>{formatDate(trade.createdAt)}</time></div>) : <div className="modal-empty">No public orders yet.</div>}</div> : <><Portfolio positions={portfolio} markets={data.markets} balance={demoBalance} /><button className="logout-button" onClick={logout}>Log out</button></>}
+            {dialog === "activity" ? <div className="activity-table">{data.activity.length ? data.activity.map((trade) => <div className="activity-detail" key={trade.id}><i className={trade.side === "YES" ? "buy" : "sell"} /><span><b>{trade.traderAlias} bought {trade.side}</b><small>{trade.marketTitle}</small></span><strong>{formatUsd(trade.amount)}</strong><time>{formatDate(trade.createdAt)}</time></div>) : <div className="modal-empty">No public orders yet.</div>}</div> : <><Portfolio positions={portfolio} markets={data.markets} balance={demoBalance} /><div className="account-security"><div><b>Passwordless sign-in</b><span>Add this device or a synced passkey to your account.</span></div><button onClick={usePasskey} disabled={authSubmitting}>{authSubmitting ? "Waiting for device…" : "Add passkey"}</button></div><button className="logout-button" onClick={logout}>Log out</button></>}
           </section>
         </div>
       ) : null}
 
-      {authOpen ? <div className="modal-backdrop" onMouseDown={() => setAuthOpen(false)}><form className="auth-modal" onSubmit={submitAuth} onMouseDown={(event) => event.stopPropagation()}><div className="modal-head"><div><p className="eyebrow">{authMode === "login" ? "WELCOME BACK" : "CREATE ACCOUNT"}</p><h2>{authMode === "login" ? "Log in to trade." : "Start with $10,000 in play money."}</h2></div><button type="button" onClick={() => setAuthOpen(false)}>×</button></div>{authMode === "register" ? <label>Display name<input name="displayName" required minLength={2} maxLength={32} autoComplete="name" /></label> : null}<label>Email<input name="email" type="email" required autoComplete="email" /></label><label>Password<input name="password" type="password" required minLength={8} maxLength={72} autoComplete={authMode === "login" ? "current-password" : "new-password"} /></label>{authError ? <p className="auth-error">{authError}</p> : null}<button className="trade-submit" disabled={authSubmitting}>{authSubmitting ? "Please wait…" : authMode === "login" ? "Log in" : "Create account"}</button><button className="auth-switch" type="button" onClick={() => { setAuthMode(authMode === "login" ? "register" : "login"); setAuthError(""); }}>{authMode === "login" ? "New here? Create an account" : "Already registered? Log in"}</button><p className="disclaimer">Demo only. Do not reuse an important password.</p></form></div> : null}
+      {authOpen ? <div className="modal-backdrop" onMouseDown={() => setAuthOpen(false)}><form className="auth-modal" onSubmit={submitAuth} onMouseDown={(event) => event.stopPropagation()}><div className="modal-head"><div><p className="eyebrow">{authMode === "login" ? "WELCOME BACK" : "CREATE ACCOUNT"}</p><h2>{authMode === "login" ? "Log in to trade." : "Start with $10,000 in play money."}</h2></div><button type="button" onClick={() => setAuthOpen(false)}>×</button></div><div className="social-auth"><a href="/api/auth/google/start"><span className="google-g">G</span>Continue with Google</a>{authMode === "login" ? <button type="button" onClick={usePasskey} disabled={authSubmitting}><span className="passkey-mark">◇</span>Continue with a passkey</button> : null}</div><div className="auth-divider"><span>or use email</span></div>{authMode === "register" ? <label>Display name<input name="displayName" required minLength={2} maxLength={32} autoComplete="name" /></label> : null}<label>Email<input name="email" type="email" required autoComplete="email" /></label><label>Password<input name="password" type="password" required minLength={8} maxLength={72} autoComplete={authMode === "login" ? "current-password" : "new-password"} /></label>{authError ? <p className="auth-error">{authError}</p> : null}<button className="trade-submit" disabled={authSubmitting}>{authSubmitting ? "Please wait…" : authMode === "login" ? "Log in" : "Create account"}</button><button className="auth-switch" type="button" onClick={() => { setAuthMode(authMode === "login" ? "register" : "login"); setAuthError(""); }}>{authMode === "login" ? "New here? Create an account" : "Already registered? Log in"}</button><p className="disclaimer">Passkeys can use Face ID, Touch ID, Windows Hello, or a device PIN.</p></form></div> : null}
     </main>
   );
 }
