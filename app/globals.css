@@ -173,3 +173,49 @@ textarea::placeholder {
   .market-title h3 { font-size: 15px; }
 }
 
+
+.community-tool { display: inline-flex; align-items: center; gap: 7px; }
+.community-tool i { width: 7px; height: 7px; border-radius: 50%; background: #e56b2f; box-shadow: 0 0 0 3px rgba(229,107,47,.13); }
+.community-signals { display: grid; gap: 0; }
+.signal-composer { display: grid; grid-template-columns: 38px 1fr; gap: 12px; padding: 2px 0 20px; border-bottom: 1px solid #d9d3c7; }
+.signal-avatar { width: 38px; height: 38px; border: 1px solid #bbb3a5; background: #1d1b17; color: #fff; display: grid; place-items: center; font-size: 11px; font-weight: 800; letter-spacing: .05em; flex: 0 0 auto; }
+.signal-composer > div { min-width: 0; }
+.signal-composer textarea { width: 100%; min-height: 88px; resize: vertical; border: 1px solid #cec7ba; background: #fffef9; padding: 13px 14px; color: #191814; outline: none; }
+.signal-composer textarea:focus { border-color: #1d1b17; box-shadow: 0 0 0 2px rgba(29,27,23,.08); }
+.signal-composer footer { display: flex; align-items: center; gap: 12px; margin-top: 9px; }
+.signal-composer footer label { display: flex; align-items: center; gap: 7px; color: #5f5a51; font-size: 11px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.signal-composer footer label input { width: 14px; height: 14px; accent-color: #e56b2f; }
+.signal-composer footer > span { margin-left: auto; color: #79736a; font-size: 10px; white-space: nowrap; }
+.signal-composer footer button { border: 0; background: #e56b2f; color: #fff; padding: 9px 13px; font-weight: 750; cursor: pointer; white-space: nowrap; }
+.signal-composer footer button:disabled { opacity: .48; cursor: not-allowed; }
+.signal-tabs { display: flex; gap: 4px; padding: 14px 0 7px; }
+.signal-tabs button { border: 0; background: transparent; color: #716b61; padding: 8px 12px; font-weight: 700; cursor: pointer; }
+.signal-tabs button.active { background: #1d1b17; color: #fff; }
+.signal-feed { display: grid; }
+.signal-post { display: grid; grid-template-columns: 38px 1fr; gap: 12px; padding: 18px 0; border-bottom: 1px solid #e1dbcf; }
+.signal-post > div { min-width: 0; }
+.signal-post header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.signal-post header > span { display: flex; align-items: baseline; gap: 9px; min-width: 0; }
+.signal-post header b { color: #191814; font-size: 13px; }
+.signal-post header small { color: #7a746b; font-size: 10px; letter-spacing: .04em; }
+.signal-post header button { border: 1px solid #bfb8aa; background: transparent; color: #34312b; padding: 6px 9px; font-size: 10px; font-weight: 750; cursor: pointer; }
+.signal-post header button.following { background: #e8efe6; border-color: #9aad94; color: #294328; }
+.signal-post header button.delete-signal { color: #8e3d2e; border-color: #d4aaa0; }
+.signal-post p { margin: 9px 0 11px; color: #292721; font-size: 14px; line-height: 1.62; white-space: pre-wrap; overflow-wrap: anywhere; }
+.linked-market { display: inline-block; max-width: 100%; padding: 5px 8px; background: #f2ede2; color: #5e574d; font-size: 9px; font-weight: 750; letter-spacing: .07em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.signal-post footer { display: flex; align-items: center; gap: 13px; margin-top: 12px; color: #777168; font-size: 10px; }
+.signal-post footer button { border: 0; background: transparent; color: #6e685f; padding: 2px 0; font-weight: 750; cursor: pointer; }
+.signal-post footer button.liked { color: #c84734; }
+.signal-post footer time { margin-left: auto; }
+.signal-feed .modal-empty { margin: 20px 0 4px; }
+@media (max-width: 600px) {
+  .signal-composer, .signal-post { grid-template-columns: 32px 1fr; gap: 9px; }
+  .signal-avatar { width: 32px; height: 32px; }
+  .signal-composer footer { align-items: flex-start; flex-wrap: wrap; }
+  .signal-composer footer label { width: 100%; }
+  .signal-composer footer > span { margin-left: 0; }
+  .signal-composer footer button { margin-left: auto; }
+  .signal-post footer { flex-wrap: wrap; }
+  .signal-post footer time { width: 100%; margin-left: 0; }
+}
+

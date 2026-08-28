@@ -4,7 +4,7 @@ import { FormEvent, useState } from "react";
 
 type User = { id: string; email: string; displayName: string; isAdmin?: boolean; walletAddress?: string; bio?: string };
 type Market = { id: string; title: string; category: string; yesPrice: number; closesAt: number; description: string };
-type Panel = "detail" | "watchlist" | "rankings" | "alerts" | "profile" | "onchain" | "admin" | null;
+type Panel = "detail" | "community" | "watchlist" | "rankings" | "alerts" | "profile" | "onchain" | "admin" | null;
 
 export default function ProductHub({ user, market, onRequireAccount }: { user: User | null; market?: Market; onRequireAccount: () => void }) {
   const [panel, setPanel] = useState<Panel>(null); const [payload, setPayload] = useState<any>(null); const [busy, setBusy] = useState(false); const [message, setMessage] = useState(""); const [wallet, setWallet] = useState(user?.walletAddress ?? ""); const [chainId, setChainId] = useState("");
@@ -12,10 +12,10 @@ export default function ProductHub({ user, market, onRequireAccount }: { user: U
   async function open(next: Exclude<Panel, null>) {
     if (["watchlist", "alerts", "profile", "admin"].includes(next) && !user) { onRequireAccount(); return; }
     setPanel(next); setMessage(""); setPayload(null);
-    const view = next === "detail" ? "market&marketId=" + encodeURIComponent(market?.id ?? "") : next === "rankings" ? "leaderboard" : next === "alerts" ? "notifications" : next === "watchlist" ? "favorites" : next === "admin" ? "admin" : "";
+    const view = next === "community" ? "community" : next === "detail" ? "market&marketId=" + encodeURIComponent(market?.id ?? "") : next === "rankings" ? "leaderboard" : next === "alerts" ? "notifications" : next === "watchlist" ? "favorites" : next === "admin" ? "admin" : "";
     if (!view) return;
     setBusy(true);
-    try { const response = await fetch("/api/product?view=" + view, { cache: "no-store" }); const result = await response.json(); if (!response.ok) throw new Error(result.error); setPayload(result); }
+    try { const response = await fetch(next === "community" ? "/api/community?mode=latest" : "/api/product?view=" + view, { cache: "no-store" }); const result = await response.json(); if (!response.ok) throw new Error(result.error); setPayload(result); }
     catch (error) { setMessage(error instanceof Error ? error.message : "Unable to load"); }
     finally { setBusy(false); }
   }
@@ -31,6 +31,24 @@ export default function ProductHub({ user, market, onRequireAccount }: { user: U
   async function comment(event: FormEvent<HTMLFormElement>) { event.preventDefault(); const form = new FormData(event.currentTarget); await action({ action: "comment", marketId: market?.id, body: form.get("body") }, "detail"); event.currentTarget.reset(); }
   async function report(event: FormEvent<HTMLFormElement>) { event.preventDefault(); const form = new FormData(event.currentTarget); await action({ action: "report", marketId: market?.id, reason: form.get("reason") }); event.currentTarget.reset(); }
   async function saveProfile(event: FormEvent<HTMLFormElement>) { event.preventDefault(); const form = new FormData(event.currentTarget); await action({ action: "profile", bio: form.get("bio") }); }
+
+  async function loadCommunity(mode: "latest" | "following") {
+    if (mode === "following" && !user) { onRequireAccount(); return; }
+    setBusy(true); setMessage("");
+    try { const response = await fetch("/api/community?mode=" + mode, { cache: "no-store" }); const result = await response.json(); if (!response.ok) throw new Error(result.error); setPayload(result); }
+    catch (error) { setMessage(error instanceof Error ? error.message : "Unable to load community"); }
+    finally { setBusy(false); }
+  }
+
+  async function communityAction(body: Record<string, unknown>) {
+    if (!user) { onRequireAccount(); return false; }
+    setBusy(true); setMessage("");
+    try { const response = await fetch("/api/community", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }); const result = await response.json(); if (!response.ok) throw new Error(result.error); await loadCommunity(payload?.mode === "following" ? "following" : "latest"); return true; }
+    catch (error) { setMessage(error instanceof Error ? error.message : "Community action failed"); return false; }
+    finally { setBusy(false); }
+  }
+
+  async function publishSignal(event: FormEvent<HTMLFormElement>) { event.preventDefault(); const form = event.currentTarget; const data = new FormData(form); if (await communityAction({ action: "publish", body: data.get("body"), marketId: data.get("linkMarket") ? market?.id : null })) form.reset(); }
 
   async function connect() {
     if (!user) { onRequireAccount(); return; }
@@ -49,10 +67,11 @@ export default function ProductHub({ user, market, onRequireAccount }: { user: U
 
   return <>
     <section className="product-toolbar" aria-label="Product tools">
-      <button onClick={() => open("detail")}>Market details</button><button onClick={() => open("watchlist")}>Watchlist</button><button onClick={() => open("rankings")}>Leaderboard</button><button onClick={() => open("alerts")}>Notifications</button><button onClick={() => open("profile")}>Profile</button><button className="chain-tool" onClick={() => open("onchain")}><i /> Onchain lab</button>{user?.isAdmin ? <button onClick={() => open("admin")}>Admin</button> : null}
+      <button onClick={() => open("detail")}>Market details</button><button className="community-tool" onClick={() => open("community")}><i /> Community</button><button onClick={() => open("watchlist")}>Watchlist</button><button onClick={() => open("rankings")}>Leaderboard</button><button onClick={() => open("alerts")}>Notifications</button><button onClick={() => open("profile")}>Profile</button><button className="chain-tool" onClick={() => open("onchain")}><i /> Onchain lab</button>{user?.isAdmin ? <button onClick={() => open("admin")}>Admin</button> : null}
     </section>
     {panel ? <div className="modal-backdrop" onMouseDown={() => setPanel(null)}><section className="product-modal" onMouseDown={(event) => event.stopPropagation()}><div className="modal-head"><div><p className="eyebrow">FORETELL / {panel.toUpperCase()}</p><h2>{panelTitle(panel, market?.title)}</h2></div><button onClick={() => setPanel(null)}>×</button></div>{busy && !payload ? <div className="modal-empty">Loading…</div> : null}{message ? <p className="product-message">{message}</p> : null}
       {panel === "detail" && payload ? <MarketDetail market={market!} data={payload} user={user} busy={busy} onFavorite={() => action({ action: "favorite", marketId: market?.id })} onComment={comment} onReport={report} /> : null}
+      {panel === "community" && payload ? <Community data={payload} user={user} market={market} busy={busy} onMode={loadCommunity} onPublish={publishSignal} onAction={communityAction} onRequireAccount={onRequireAccount} /> : null}
       {panel === "watchlist" && payload ? <SimpleMarkets items={payload.favorites} /> : null}
       {panel === "rankings" && payload ? <Leaderboard items={payload.leaderboard} /> : null}
       {panel === "alerts" && payload ? <Notifications items={payload.notifications} /> : null}
@@ -71,6 +90,11 @@ function MarketDetail({ market, data, user, busy, onFavorite, onComment, onRepor
 function SimpleMarkets({ items }: any) { return <div className="simple-list">{items?.length ? items.map((item: any) => <article key={item.id}><div><small>{item.category}</small><b>{item.title}</b></div><strong>{item.yesPrice}%</strong></article>) : <div className="modal-empty">Your watchlist is empty.</div>}</div>; }
 function Leaderboard({ items }: any) { return <div className="leaderboard">{items?.map((item: any, index: number) => <article key={item.id}><span>{String(index + 1).padStart(2, "0")}</span><div><b>{item.displayName}</b><small>{item.trades} trades</small></div><strong>{formatMoney(item.volumeCents / 100)} volume</strong></article>)}</div>; }
 function Notifications({ items }: any) { return <div className="notification-list">{items?.length ? items.map((item: any) => <article className={item.isRead ? "" : "unread"} key={item.id}><i /><div><b>{item.title}</b><p>{item.body}</p><time>{new Date(item.createdAt).toLocaleString()}</time></div></article>) : <div className="modal-empty">No notifications yet.</div>}</div>; }
+function Community({ data, user, market, busy, onMode, onPublish, onAction, onRequireAccount }: any) {
+  return <div className="community-signals"><form className="signal-composer" onSubmit={onPublish}><span className="signal-avatar">{user ? user.displayName.slice(0, 2).toUpperCase() : "YOU"}</span><div><textarea name="body" required minLength={3} maxLength={400} placeholder={user ? "Share evidence, a forecast, or a counterpoint…" : "Log in to publish a market signal."} onFocus={() => !user && onRequireAccount()} /><footer><label><input type="checkbox" name="linkMarket" defaultChecked />Link: {market?.title ?? "current market"}</label><span>400 max</span><button disabled={busy || !user}>{busy ? "Publishing…" : "Publish signal"}</button></footer></div></form><div className="signal-tabs"><button className={data.mode === "latest" ? "active" : ""} onClick={() => onMode("latest")}>Latest</button><button className={data.mode === "following" ? "active" : ""} onClick={() => onMode("following")}>Following</button></div><div className="signal-feed">{data.posts?.length ? data.posts.map((post: any) => <article className="signal-post" key={post.id}><span className="signal-avatar">{post.initials}</span><div><header><span><b>{post.authorName}</b><small>{relativeTime(post.createdAt)}</small></span>{!post.viewerIsAuthor ? <button className={post.following ? "following" : ""} onClick={() => onAction({ action: "follow", profileId: post.authorId, active: !post.following })}>{post.following ? "Following" : "+ Follow"}</button> : <button className="delete-signal" onClick={() => onAction({ action: "delete", postId: post.id })}>Delete</button>}</header><p>{post.body}</p>{post.marketTitle ? <span className="linked-market">MARKET · {post.marketTitle}</span> : null}<footer><button className={post.liked ? "liked" : ""} onClick={() => onAction({ action: "like", postId: post.id, active: !post.liked })}>{post.liked ? "♥" : "♡"} {post.likeCount}</button><span>{post.followerCount} followers</span><time>{new Date(post.createdAt).toLocaleString()}</time></footer></div></article>) : <div className="modal-empty"><b>{data.mode === "following" ? "No signals from people you follow." : "No community signals yet."}</b><span>{data.mode === "following" ? "Follow an analyst from the latest feed." : "Be the first to publish a clear, evidence-based view."}</span></div>}</div></div>;
+}
 function Admin({ data, busy, action }: any) { return <div className="admin-panel"><div className="admin-metrics">{Object.entries(data.metrics ?? {}).map(([key, value]) => <span key={key}><small>{key.replace(/([A-Z])/g, " $1")}</small><b>{String(value)}</b></span>)}</div><h3>Open reports</h3><div className="admin-reports">{data.reports?.length ? data.reports.map((report: any) => <article key={report.id}><div><b>{report.title}</b><p>{report.reason}</p><small>Reported by {report.reporter}</small></div><button disabled={busy} onClick={() => action({ action: "dismiss-report", reportId: report.id }, "admin")}>Dismiss</button></article>) : <p>No open reports.</p>}</div><h3>Resolve markets</h3><div className="admin-markets">{data.markets?.filter((market: any) => market.status === "open").map((market: any) => <article key={market.id}><span>{market.title}</span><div><button disabled={busy} onClick={() => action({ action: "resolve", marketId: market.id, outcome: "YES" }, "admin")}>Resolve YES</button><button disabled={busy} onClick={() => action({ action: "resolve", marketId: market.id, outcome: "NO" }, "admin")}>Resolve NO</button></div></article>)}</div></div>; }
-function panelTitle(panel: Panel, market?: string) { return panel === "detail" ? market ?? "Market details" : ({ watchlist: "Markets you are following.", rankings: "Community leaderboard.", alerts: "Your notifications.", profile: "Public profile.", onchain: "Onchain test environment.", admin: "Operations console." } as Record<string, string>)[panel ?? ""] ?? ""; }
+function panelTitle(panel: Panel, market?: string) { return panel === "detail" ? market ?? "Market details" : ({ community: "Community signals.", watchlist: "Markets you are following.", rankings: "Community leaderboard.", alerts: "Your notifications.", profile: "Public profile.", onchain: "Onchain test environment.", admin: "Operations console." } as Record<string, string>)[panel ?? ""] ?? ""; }
 function formatMoney(value: number) { return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", notation: "compact", maximumFractionDigits: 1 }).format(value); }
+function relativeTime(timestamp: number) { const seconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000)); if (seconds < 60) return "now"; const minutes = Math.floor(seconds / 60); if (minutes < 60) return minutes + "m"; const hours = Math.floor(minutes / 60); if (hours < 24) return hours + "h"; return Math.floor(hours / 24) + "d"; }
+
