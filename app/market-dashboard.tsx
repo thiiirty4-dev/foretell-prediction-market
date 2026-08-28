@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import ProductHub from "./product-hub";
 
 type Market = {
   id: string; slug: string; title: string; description: string; category: string;
@@ -18,7 +19,7 @@ type MarketPayload = { markets: Market[]; activity: Activity[] };
 type Position = {
   marketId: string; marketTitle: string; yesShares: number; noShares: number; spent: number;
 };
-type User = { id: string; email: string; displayName: string; createdAt: number };
+type User = { id: string; email: string; displayName: string; createdAt: number; isAdmin?: boolean; walletAddress?: string; bio?: string };
 
 const categoryCode: Record<string, string> = {
   Crypto: "CR", "AI & Tech": "AI", Macro: "MA", Culture: "CU", Science: "SC",
@@ -46,6 +47,7 @@ export default function MarketDashboard() {
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [authError, setAuthError] = useState("");
   const [authSubmitting, setAuthSubmitting] = useState(false);
+  const [accountBalance, setAccountBalance] = useState(10_000);
 
   const loadMarkets = useCallback(async () => {
     const response = await fetch("/api/markets", { cache: "no-store" });
@@ -57,7 +59,7 @@ export default function MarketDashboard() {
 
   useEffect(() => {
     loadMarkets().catch(() => setNotice("The market feed is temporarily unavailable.")).finally(() => setLoading(false));
-    fetch("/api/auth/me", { cache: "no-store" }).then((response) => response.json()).then((session: { user: User | null; positions: Position[] }) => { setUser(session.user); setPortfolio(session.positions); }).catch(() => setNotice("Account status could not be loaded."));
+    fetch("/api/auth/me", { cache: "no-store" }).then((response) => response.json()).then((session: { user: User | null; positions: Position[]; balance: number }) => { setUser(session.user); setPortfolio(session.positions); setAccountBalance(session.balance); }).catch(() => setNotice("Account status could not be loaded."));
   }, [loadMarkets]);
 
   const visibleMarkets = useMemo(() => {
@@ -72,7 +74,7 @@ export default function MarketDashboard() {
   const selected = data.markets.find((market) => market.id === selectedId) ?? data.markets[0];
   const totalVolume = data.markets.reduce((sum, market) => sum + market.volume, 0);
   const totalTraders = data.markets.reduce((sum, market) => sum + market.traderCount, 0);
-  const demoBalance = Math.max(0, 10_000 - portfolio.reduce((sum, position) => sum + position.spent, 0));
+  const demoBalance = accountBalance;
   const amountNumber = Number(amount) || 0;
   const selectedPrice = selected ? (side === "YES" ? selected.yesPrice : 100 - selected.yesPrice) : 50;
   const shares = selectedPrice > 0 ? amountNumber / (selectedPrice / 100) : 0;
@@ -130,7 +132,7 @@ export default function MarketDashboard() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ marketId: selected.id, side, amount: amountNumber }),
       });
-      const result = await response.json() as { error?: string; market?: Market; activity?: Activity };
+      const result = await response.json() as { error?: string; market?: Market; activity?: Activity; balance?: number };
       if (!response.ok || !result.market || !result.activity) throw new Error(result.error || "Trade failed");
       setData((current) => ({
         markets: current.markets.map((market) => market.id === result.market!.id ? result.market! : market),
@@ -151,6 +153,7 @@ export default function MarketDashboard() {
         }];
         return updated;
       });
+      if (typeof result.balance === "number") setAccountBalance(result.balance);
       setNotice("Order filled: " + result.activity.shares.toFixed(2) + " " + side + " shares at " + result.activity.price + "¢.");
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Trade failed");
@@ -197,14 +200,15 @@ export default function MarketDashboard() {
       const response = await fetch("/api/auth/" + authMode, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: form.get("email"), password: form.get("password"), displayName: form.get("displayName") }) });
       const result = await response.json() as { error?: string; user?: User; positions?: Position[] };
       if (!response.ok || !result.user) throw new Error(result.error || "Authentication failed");
-      setUser(result.user); setPortfolio(result.positions ?? []); setAuthOpen(false); setNotice("Signed in as " + result.user.displayName + ".");
+      const session = await fetch("/api/auth/me", { cache: "no-store" }).then((item) => item.json()) as { user: User; positions: Position[]; balance: number };
+      setUser(session.user); setPortfolio(session.positions ?? []); setAccountBalance(session.balance); setAuthOpen(false); setNotice("Signed in as " + session.user.displayName + ".");
     } catch (error) { setAuthError(error instanceof Error ? error.message : "Authentication failed"); }
     finally { setAuthSubmitting(false); }
   }
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
-    setUser(null); setPortfolio([]); setDialog(null); setNotice("You have signed out.");
+    setUser(null); setPortfolio([]); setAccountBalance(10_000); setDialog(null); setNotice("You have signed out.");
   }
 
   return (
@@ -231,6 +235,7 @@ export default function MarketDashboard() {
         <div className="idea-input"><input aria-label="Market idea" placeholder="For example: Bitcoin reaches $150K this year" value={idea} onChange={(event) => setIdea(event.target.value)} onKeyDown={(event) => event.key === "Enter" && structureDraft()} /><button onClick={structureDraft}>Prepare market</button></div>
         <p>CHECK THE DEADLINE AND RESOLUTION RULE BEFORE PUBLISHING</p>
       </section>
+      <ProductHub user={user} market={selected} onRequireAccount={() => requireAccount()} />
 
       <div className="workspace">
         <aside className="rail">
