@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://foretell-markets.foretell-labs.workers.dev"),
   title: "Foretell | Prediction Markets",
   description: "A public prediction market simulation with persistent market data.",
   openGraph: {

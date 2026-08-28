@@ -2,7 +2,7 @@
 
 A public prediction-market simulation built as a portfolio project. Foretell combines a dense trading-workstation interface with durable market and trade data.
 
-**Live demo:** https://foretell-markets.valfluxai995030.chatgpt.site
+**Live demo:** https://foretell-markets.foretell-labs.workers.dev
 
 ## What it demonstrates
 
@@ -58,4 +58,3 @@ npm run build
 ## Important scope
 
 Foretell is a technical demonstration. Trading, balances, prices and payouts are simulations with no real money or financial value. It is not investment advice and does not connect to a blockchain or execute real transactions.
-
