@@ -18,6 +18,7 @@ type MarketPayload = { markets: Market[]; activity: Activity[] };
 type Position = {
   marketId: string; marketTitle: string; yesShares: number; noShares: number; spent: number;
 };
+type User = { id: string; email: string; displayName: string; createdAt: number };
 
 const categoryCode: Record<string, string> = {
   Crypto: "CR", "AI & Tech": "AI", Macro: "MA", Culture: "CU", Science: "SC",
@@ -40,6 +41,11 @@ export default function MarketDashboard() {
   const [idea, setIdea] = useState("");
   const [draft, setDraft] = useState({ title: "", description: "", category: "Crypto", closesAt: nextMonth() });
   const [portfolio, setPortfolio] = useState<Position[]>([]);
+  const [user, setUser] = useState<User | null>(null);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const [authError, setAuthError] = useState("");
+  const [authSubmitting, setAuthSubmitting] = useState(false);
 
   const loadMarkets = useCallback(async () => {
     const response = await fetch("/api/markets", { cache: "no-store" });
@@ -51,10 +57,7 @@ export default function MarketDashboard() {
 
   useEffect(() => {
     loadMarkets().catch(() => setNotice("The market feed is temporarily unavailable.")).finally(() => setLoading(false));
-    try {
-      const saved = window.localStorage.getItem("foretell-portfolio");
-      if (saved) setPortfolio(JSON.parse(saved) as Position[]);
-    } catch { /* Portfolio storage is optional. */ }
+    fetch("/api/auth/me", { cache: "no-store" }).then((response) => response.json()).then((session: { user: User | null; positions: Position[] }) => { setUser(session.user); setPortfolio(session.positions); }).catch(() => setNotice("Account status could not be loaded."));
   }, [loadMarkets]);
 
   const visibleMarkets = useMemo(() => {
@@ -80,6 +83,14 @@ export default function MarketDashboard() {
     setTradeOpen(true);
   }
 
+  function requireAccount(mode: "login" | "register" = "login") {
+    setAuthMode(mode); setAuthError(""); setAuthOpen(true);
+  }
+
+  function openPortfolio() {
+    if (!user) requireAccount(); else setDialog("portfolio");
+  }
+
   function structureDraft() {
     const clean = idea.trim().replace(/[?.!]+$/, "");
     if (clean.length < 5) {
@@ -97,11 +108,13 @@ export default function MarketDashboard() {
   }
 
   function openBlankMarket() {
+    if (!user) { requireAccount(); return; }
     setDraft({ title: "", description: "", category: "Crypto", closesAt: nextMonth() });
     setCreating(true);
   }
 
   async function submitTrade() {
+    if (!user) { requireAccount(); return; }
     if (!selected || amountNumber < 1 || amountNumber > 1000) {
       setNotice("Enter a simulated order between $1 and $1,000.");
       return;
@@ -136,7 +149,6 @@ export default function MarketDashboard() {
           noShares: side === "NO" ? result.activity!.shares : 0,
           spent: amountNumber,
         }];
-        try { window.localStorage.setItem("foretell-portfolio", JSON.stringify(updated)); } catch { /* Portfolio storage is optional. */ }
         return updated;
       });
       setNotice("Order filled: " + result.activity.shares.toFixed(2) + " " + side + " shares at " + result.activity.price + "¢.");
@@ -149,6 +161,7 @@ export default function MarketDashboard() {
 
   async function createMarket(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!user) { requireAccount(); return; }
     setSubmitting(true);
     setNotice("");
     const formElement = event.currentTarget;
@@ -177,16 +190,33 @@ export default function MarketDashboard() {
     }
   }
 
+  async function submitAuth(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); setAuthSubmitting(true); setAuthError("");
+    const form = new FormData(event.currentTarget);
+    try {
+      const response = await fetch("/api/auth/" + authMode, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: form.get("email"), password: form.get("password"), displayName: form.get("displayName") }) });
+      const result = await response.json() as { error?: string; user?: User; positions?: Position[] };
+      if (!response.ok || !result.user) throw new Error(result.error || "Authentication failed");
+      setUser(result.user); setPortfolio(result.positions ?? []); setAuthOpen(false); setNotice("Signed in as " + result.user.displayName + ".");
+    } catch (error) { setAuthError(error instanceof Error ? error.message : "Authentication failed"); }
+    finally { setAuthSubmitting(false); }
+  }
+
+  async function logout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    setUser(null); setPortfolio([]); setDialog(null); setNotice("You have signed out.");
+  }
+
   return (
     <main className="app-shell">
       <header className="topbar">
         <a className="brand" href="#"><span className="brand-mark">F</span><span>FORETELL</span></a>
         <nav aria-label="Primary navigation">
-          <a className="active" href="#markets">Markets</a><button onClick={() => setDialog("activity")}>Activity</button><button onClick={() => setDialog("portfolio")}>Portfolio</button>
+          <a className="active" href="#markets">Markets</a><button onClick={() => setDialog("activity")}>Activity</button><button onClick={openPortfolio}>Portfolio</button>
         </nav>
         <div className="top-actions">
           <label className="search"><span>/</span><input aria-label="Search markets" placeholder="Search markets" value={search} onChange={(event) => setSearch(event.target.value)} /></label>
-          <button className="balance-button" onClick={() => setDialog("portfolio")}><small>DEMO BALANCE</small>{formatDollars(demoBalance)}</button>
+          {user ? <button className="balance-button" onClick={openPortfolio}><small>{user.displayName}</small>{formatDollars(demoBalance)}</button> : <button className="account-button" onClick={() => requireAccount()}>Log in</button>}
           <button className="create-button" onClick={openBlankMarket}>+ Create market</button>
         </div>
       </header>
@@ -197,9 +227,9 @@ export default function MarketDashboard() {
       </section>
 
       <section className="idea-bar">
-        <div><p className="eyebrow">MARKET STUDIO</p><h2>What should become a market?</h2></div>
-        <div className="idea-input"><input aria-label="Market idea" placeholder="Enter an event, claim, or narrative…" value={idea} onChange={(event) => setIdea(event.target.value)} onKeyDown={(event) => event.key === "Enter" && structureDraft()} /><button onClick={structureDraft}>Structure draft ↗</button></div>
-        <p>LOCAL DRAFTING HELPER · HUMAN REVIEW REQUIRED</p>
+        <div><p className="eyebrow">QUESTION BUILDER</p><h2>Turn an idea into a clear market.</h2></div>
+        <div className="idea-input"><input aria-label="Market idea" placeholder="For example: Bitcoin reaches $150K this year" value={idea} onChange={(event) => setIdea(event.target.value)} onKeyDown={(event) => event.key === "Enter" && structureDraft()} /><button onClick={structureDraft}>Prepare market</button></div>
+        <p>CHECK THE DEADLINE AND RESOLUTION RULE BEFORE PUBLISHING</p>
       </section>
 
       <div className="workspace">
@@ -291,10 +321,12 @@ export default function MarketDashboard() {
         <div className="modal-backdrop" onMouseDown={() => setDialog(null)}>
           <section className="info-modal" onMouseDown={(event) => event.stopPropagation()}>
             <div className="modal-head"><div><p className="eyebrow">{dialog === "activity" ? "DATABASE FEED" : "LOCAL DEMO ACCOUNT"}</p><h2>{dialog === "activity" ? "Recent market activity." : "Your simulated positions."}</h2></div><button onClick={() => setDialog(null)}>×</button></div>
-            {dialog === "activity" ? <div className="activity-table">{data.activity.length ? data.activity.map((trade) => <div className="activity-detail" key={trade.id}><i className={trade.side === "YES" ? "buy" : "sell"} /><span><b>{trade.traderAlias} bought {trade.side}</b><small>{trade.marketTitle}</small></span><strong>{formatUsd(trade.amount)}</strong><time>{formatDate(trade.createdAt)}</time></div>) : <div className="modal-empty">No public orders yet.</div>}</div> : <Portfolio positions={portfolio} markets={data.markets} balance={demoBalance} />}
+            {dialog === "activity" ? <div className="activity-table">{data.activity.length ? data.activity.map((trade) => <div className="activity-detail" key={trade.id}><i className={trade.side === "YES" ? "buy" : "sell"} /><span><b>{trade.traderAlias} bought {trade.side}</b><small>{trade.marketTitle}</small></span><strong>{formatUsd(trade.amount)}</strong><time>{formatDate(trade.createdAt)}</time></div>) : <div className="modal-empty">No public orders yet.</div>}</div> : <><Portfolio positions={portfolio} markets={data.markets} balance={demoBalance} /><button className="logout-button" onClick={logout}>Log out</button></>}
           </section>
         </div>
       ) : null}
+
+      {authOpen ? <div className="modal-backdrop" onMouseDown={() => setAuthOpen(false)}><form className="auth-modal" onSubmit={submitAuth} onMouseDown={(event) => event.stopPropagation()}><div className="modal-head"><div><p className="eyebrow">{authMode === "login" ? "WELCOME BACK" : "CREATE ACCOUNT"}</p><h2>{authMode === "login" ? "Log in to trade." : "Start with $10,000 in play money."}</h2></div><button type="button" onClick={() => setAuthOpen(false)}>×</button></div>{authMode === "register" ? <label>Display name<input name="displayName" required minLength={2} maxLength={32} autoComplete="name" /></label> : null}<label>Email<input name="email" type="email" required autoComplete="email" /></label><label>Password<input name="password" type="password" required minLength={8} maxLength={72} autoComplete={authMode === "login" ? "current-password" : "new-password"} /></label>{authError ? <p className="auth-error">{authError}</p> : null}<button className="trade-submit" disabled={authSubmitting}>{authSubmitting ? "Please wait…" : authMode === "login" ? "Log in" : "Create account"}</button><button className="auth-switch" type="button" onClick={() => { setAuthMode(authMode === "login" ? "register" : "login"); setAuthError(""); }}>{authMode === "login" ? "New here? Create an account" : "Already registered? Log in"}</button><p className="disclaimer">Demo only. Do not reuse an important password.</p></form></div> : null}
     </main>
   );
 }
@@ -304,7 +336,7 @@ function Portfolio({ positions, markets, balance }: { positions: Position[]; mar
     const market = markets.find((item) => item.id === position.marketId);
     return sum + position.yesShares * ((market?.yesPrice ?? 50) / 100) + position.noShares * ((100 - (market?.yesPrice ?? 50)) / 100);
   }, 0);
-  return <><div className="portfolio-summary"><span><small>DEMO CASH</small><b>{formatDollars(balance)}</b></span><span><small>POSITION VALUE</small><b>{formatDollars(value)}</b></span><span><small>OPEN MARKETS</small><b>{positions.length}</b></span></div><div className="position-list">{positions.length ? positions.map((position) => <div className="position-row" key={position.marketId}><div><span>OPEN POSITION</span><h3>{position.marketTitle}</h3></div><div><b className="yes-text">{position.yesShares.toFixed(2)} YES</b><b className="no-text">{position.noShares.toFixed(2)} NO</b><small>{formatDollars(position.spent)} cost</small></div></div>) : <div className="modal-empty"><b>No positions yet.</b><span>Choose YES or NO on any market to place a simulated order.</span></div>}</div><p className="portfolio-note">Portfolio data is saved in this browser. Public trades are stored in the cloud database.</p></>;
+  return <><div className="portfolio-summary"><span><small>DEMO CASH</small><b>{formatDollars(balance)}</b></span><span><small>POSITION VALUE</small><b>{formatDollars(value)}</b></span><span><small>OPEN MARKETS</small><b>{positions.length}</b></span></div><div className="position-list">{positions.length ? positions.map((position) => <div className="position-row" key={position.marketId}><div><span>OPEN POSITION</span><h3>{position.marketTitle}</h3></div><div><b className="yes-text">{position.yesShares.toFixed(2)} YES</b><b className="no-text">{position.noShares.toFixed(2)} NO</b><small>{formatDollars(position.spent)} cost</small></div></div>) : <div className="modal-empty"><b>No positions yet.</b><span>Choose YES or NO on any market to place a simulated order.</span></div>}</div><p className="portfolio-note">Positions follow your account and are stored in the project database.</p></>;
 }
 
 function inferCategory(text: string) {

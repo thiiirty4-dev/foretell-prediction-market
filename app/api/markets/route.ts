@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { insertMarket, listMarketData } from "@/db/database";
+import { getSessionUser, insertMarket, listMarketData } from "@/db/database";
+import { hashSessionToken, sessionTokenFromRequest } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 const categories = new Set(["Crypto", "AI & Tech", "Macro", "Culture", "Science"]);
@@ -14,6 +15,9 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const token = sessionTokenFromRequest(request);
+    const user = token ? await getSessionUser(await hashSessionToken(token)) : null;
+    if (!user) return NextResponse.json({ error: "Sign in to publish a market" }, { status: 401 });
     const body = await request.json() as Record<string, unknown>;
     const title = typeof body.title === "string" ? body.title.trim() : "";
     const description = typeof body.description === "string" ? body.description.trim() : "";
@@ -28,4 +32,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Invalid market" }, { status: 400 });
   }
 }
-

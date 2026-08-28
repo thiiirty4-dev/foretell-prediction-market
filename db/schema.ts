@@ -19,6 +19,16 @@ export const markets = sqliteTable("markets", {
   index("idx_markets_created_at").on(table.createdAt),
 ]);
 
+export const users = sqliteTable("users", {
+  id: text("id").primaryKey(), email: text("email").notNull().unique(), displayName: text("display_name").notNull(),
+  passwordHash: text("password_hash").notNull(), passwordSalt: text("password_salt").notNull(), createdAt: integer("created_at").notNull(),
+});
+
+export const sessions = sqliteTable("sessions", {
+  tokenHash: text("token_hash").primaryKey(), userId: text("user_id").notNull().references(() => users.id),
+  expiresAt: integer("expires_at").notNull(), createdAt: integer("created_at").notNull(),
+}, (table) => [index("idx_sessions_user").on(table.userId), index("idx_sessions_expiry").on(table.expiresAt)]);
+
 export const trades = sqliteTable("trades", {
   id: text("id").primaryKey(),
   marketId: text("market_id").notNull().references(() => markets.id),
@@ -28,8 +38,8 @@ export const trades = sqliteTable("trades", {
   price: integer("price").notNull(),
   traderAlias: text("trader_alias").notNull(),
   createdAt: integer("created_at").notNull(),
+  userId: text("user_id").references(() => users.id),
 }, (table) => [
   index("idx_trades_market_created").on(table.marketId, table.createdAt),
   index("idx_trades_created_at").on(table.createdAt),
 ]);
-
