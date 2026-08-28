@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { createSession, findUserByEmail, insertUser } from "@/db/database";
 import { attachSession, createSessionToken, hashPassword, hashSessionToken } from "@/lib/auth";
+import { protectMutation } from "@/lib/request-security";
 
 export async function POST(request: Request) {
   try {
+    const blocked = await protectMutation(request, "register", 5, 600_000); if (blocked) return blocked;
     const body = await request.json() as Record<string, unknown>;
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
     const displayName = typeof body.displayName === "string" ? body.displayName.trim() : "";

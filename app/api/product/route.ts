@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { addComment, addReport, adminData, connectWallet, dismissReport, favorites, getProductUser, leaderboard, marketProductData, notifications, resolveMarket, toggleFavorite, updateProfile } from "@/db/product";
+import { protectMutation } from "@/lib/request-security";
 
 export async function GET(request: Request) {
   try {
+    const blocked = await protectMutation(request, "product", 60, 60_000); if (blocked) return blocked;
     const url = new URL(request.url); const view = url.searchParams.get("view") ?? "market"; const user = await getProductUser(request);
     if (view === "market") return NextResponse.json(await marketProductData(url.searchParams.get("marketId") ?? "", user?.id));
     if (view === "leaderboard") return NextResponse.json({ leaderboard: await leaderboard() });

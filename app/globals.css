@@ -355,3 +355,12 @@ textarea::placeholder {
 @media (max-width: 760px) { .terminal-grid { grid-template-columns: 1fr; } .terminal-heading { align-items: flex-start; flex-direction: column; } .terminal-heading > div:last-child { width: 100%; justify-content: space-between; } }
 @media (max-width: 480px) { .alert-form { grid-template-columns: 1fr 70px; } .alert-form button { grid-column: 1 / -1; } .terminal-trade { grid-template-columns: 28px 1fr auto; } .terminal-trade time { display: none; } }
 
+.depth-row .bid { background: linear-gradient(90deg, rgba(33,171,111,.13) 0 var(--depth), transparent var(--depth)); }
+.depth-row .ask { background: linear-gradient(270deg, rgba(226,92,77,.13) 0 var(--depth), transparent var(--depth)); }
+.legal-links { display:flex; justify-content:center; gap:20px; padding:0 20px 18px; color:var(--muted); font-size:12px; }
+.legal-links a:hover { color:var(--ink); }
+.legal-page { min-height:100vh; padding:72px 24px; background:radial-gradient(circle at 15% 0,rgba(239,147,56,.12),transparent 34%),var(--paper); color:var(--ink); }
+.legal-page article { width:min(760px,100%); margin:auto; padding:clamp(28px,5vw,64px); background:rgba(255,255,255,.82); border:1px solid var(--line); }
+.legal-page h1 { font-size:clamp(38px,7vw,72px); margin:8px 0 24px; }
+.legal-page h2 { margin-top:30px; font-size:20px; }
+.legal-page p { color:var(--muted); line-height:1.75; }

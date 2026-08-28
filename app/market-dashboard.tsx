@@ -2,6 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { startAuthentication, startRegistration } from "@simplewebauthn/browser";
+import Link from "next/link";
 import ProductHub from "./product-hub";
 
 type Market = {
@@ -59,6 +60,7 @@ export default function MarketDashboard() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time client hydration
     loadMarkets().catch(() => setNotice("The market feed is temporarily unavailable.")).finally(() => setLoading(false));
     fetch("/api/auth/me", { cache: "no-store" }).then((response) => response.json()).then((session: { user: User | null; positions: Position[]; balance: number }) => { setUser(session.user); setPortfolio(session.positions); setAccountBalance(session.balance); }).catch(() => setNotice("Account status could not be loaded."));
     const query = new URLSearchParams(window.location.search); const oauthError = query.get("authError");
@@ -247,7 +249,7 @@ export default function MarketDashboard() {
   return (
     <main className="app-shell">
       <header className="topbar">
-        <a className="brand" href="#"><span className="brand-mark">F</span><span>FORETELL</span></a>
+        <Link className="brand" href="/"><span className="brand-mark">F</span><span>FORETELL</span></Link>
         <nav aria-label="Primary navigation">
           <a className="active" href="#markets">Markets</a><button onClick={() => setDialog("activity")}>Activity</button><button onClick={openPortfolio}>Portfolio</button>
         </nav>
@@ -280,8 +282,8 @@ export default function MarketDashboard() {
           <button className={sort === "ending" ? "selected" : ""} onClick={() => setSort("ending")}><span>03</span>Ending soon</button>
           <button onClick={() => setDialog("activity")}><span>04</span>Recent activity</button>
           <p className="rail-label">CATEGORIES</p>
-          {["Crypto", "AI & Tech", "Macro", "Culture"].map((category, index) => (
-            <button className={category === category ? "" : ""} key={category} onClick={() => { setCategory(category); setSearch(""); }}><span className={"dot " + ["orange","green","blue","sand"][index]} />{category}</button>
+          {["Crypto", "AI & Tech", "Macro", "Culture"].map((itemCategory, index) => (
+            <button className={category === itemCategory ? "selected" : ""} key={itemCategory} onClick={() => { setCategory(itemCategory); setSearch(""); }}><span className={"dot " + ["orange","green","blue","sand"][index]} />{itemCategory}</button>
           ))}
           <div className="demo-note"><b>PORTFOLIO PROJECT</b><p>Public prediction-market simulation backed by a durable cloud database.</p></div>
         </aside>
