@@ -76,6 +76,14 @@ export default function MarketDashboard() {
     return [...filtered].sort((a, b) => sort === "new" ? b.createdAt - a.createdAt : sort === "ending" ? a.closesAt - b.closesAt : b.volume - a.volume);
   }, [category, data.markets, search, sort]);
 
+  const marketPulse = useMemo(() => {
+    if (!data.markets.length) return [];
+    const byVolume = [...data.markets].sort((a, b) => b.volume - a.volume)[0];
+    const decisive = [...data.markets].sort((a, b) => Math.abs(b.yesPrice - 50) - Math.abs(a.yesPrice - 50))[0];
+    const ending = [...data.markets].sort((a, b) => a.closesAt - b.closesAt)[0];
+    return [{ label: "MOST TRADED", note: formatUsd(byVolume.volume) + " volume", market: byVolume }, { label: "STRONGEST SIGNAL", note: decisive.yesPrice + "% YES", market: decisive }, { label: "CLOSING NEXT", note: formatDate(ending.closesAt), market: ending }];
+  }, [data.markets]);
+
   const selected = data.markets.find((market) => market.id === selectedId) ?? data.markets[0];
   const totalVolume = data.markets.reduce((sum, market) => sum + market.volume, 0);
   const totalTraders = data.markets.reduce((sum, market) => sum + market.traderCount, 0);
@@ -89,6 +97,8 @@ export default function MarketDashboard() {
     setSide(outcome);
     setTradeOpen(true);
   }
+
+  function focusMarket(market: Market) { setSelectedId(market.id); setCategory("All"); setSearch(""); document.getElementById("markets")?.scrollIntoView({ behavior: "smooth", block: "start" }); }
 
   function requireAccount(mode: "login" | "register" = "login") {
     setAuthMode(mode); setAuthError(""); setAuthOpen(true);
@@ -259,6 +269,8 @@ export default function MarketDashboard() {
         <p>CHECK THE DEADLINE AND RESOLUTION RULE BEFORE PUBLISHING</p>
       </section>
       <ProductHub user={user} market={selected} onRequireAccount={() => requireAccount()} />
+
+      <section className="market-pulse" aria-label="Market pulse"><header><div><p className="eyebrow">MARKET PULSE</p><h2>Three signals worth checking now.</h2></div><span>UPDATED FROM LIVE MARKET DATA</span></header><div>{marketPulse.map((item) => <button key={item.label} onClick={() => focusMarket(item.market)}><span>{item.label}</span><b>{item.market.title}</b><small>{item.note}</small><i>OPEN →</i></button>)}</div></section>
 
       <div className="workspace">
         <aside className="rail">
