@@ -74,3 +74,102 @@ nav button{height:70px;display:grid;place-items:center;border:0;border-bottom:2p
 .account-security button { border: 0; background: #191814; color: #fff; padding: 10px 14px; font-weight: 700; cursor: pointer; white-space: nowrap; }
 @media (max-width: 600px) { .account-security { align-items: stretch; flex-direction: column; } .account-security button { width: 100%; } }
 
+
+/* Readability pass */
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-synthesis: none;
+}
+
+body,
+button,
+input,
+textarea,
+select {
+  font-family: "Segoe UI Variable Text", "Segoe UI", "Microsoft YaHei", sans-serif;
+  font-optical-sizing: auto;
+}
+
+body {
+  color: #1c1a16;
+  font-size: 16px;
+  font-weight: 450;
+  line-height: 1.55;
+}
+
+h1,
+h2,
+h3,
+.brand,
+.featured h2,
+.section-head h1,
+.idea-bar h2,
+.modal-head h2 {
+  font-family: "Segoe UI Variable Display", "Segoe UI", "Microsoft YaHei", sans-serif;
+  font-weight: 720;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+p,
+.market-title h3,
+.featured-copy > p,
+.community p,
+.product-modal p {
+  line-height: 1.62;
+}
+
+button,
+input,
+textarea,
+select {
+  font-size: max(14px, 0.875rem);
+}
+
+.eyebrow,
+.rail-label,
+.tag,
+.market-meta,
+.market-title > span,
+small,
+.disclaimer,
+.portfolio-note {
+  color: #625d54;
+  font-size: max(11px, 0.72rem);
+  font-weight: 650;
+  letter-spacing: 0.065em;
+}
+
+.market-title h3,
+.featured h2,
+.product-modal h2,
+.create-modal h2,
+.auth-modal h2,
+.info-modal h2 {
+  color: #151410;
+}
+
+.market-title h3 {
+  font-size: clamp(15px, 1.15vw, 18px);
+  line-height: 1.35;
+}
+
+.featured h2,
+.section-head h1 {
+  line-height: 1.08;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #777168;
+  opacity: 1;
+}
+
+@media (max-width: 700px) {
+  body { font-size: 15px; }
+  .featured h2, .section-head h1 { letter-spacing: -0.018em; }
+  .market-title h3 { font-size: 15px; }
+}
+
