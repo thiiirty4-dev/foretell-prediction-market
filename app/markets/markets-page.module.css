@@ -1,0 +1,48 @@
+.page {
+  min-height: 100vh;
+  color: #14211c;
+  background:
+    radial-gradient(circle at 82% 4%, rgba(216,241,90,.42), transparent 24rem),
+    linear-gradient(180deg, #f7f3e9 0, #f4f0e5 34rem, #ebe6d9 100%);
+}
+
+.hero { width: min(100% - 3rem,88rem); margin: auto; padding: clamp(4.5rem,8vw,7rem) 0; }
+.heroLabel { display: flex; align-items: center; gap: .75rem; margin-bottom: 2rem; font: 700 .68rem "Space Mono",monospace; letter-spacing: .1em; text-transform: uppercase; }
+.heroLabel span { display: grid; width: 2rem; height: 2rem; place-items: center; border: 1px solid #14211c; background: #d8f15a; }
+.heroGrid { display: grid; grid-template-columns: minmax(0,1fr) minmax(17rem,24rem); gap: clamp(3rem,9vw,8rem); align-items: end; }
+.hero h1 { margin: 0; font: 900 clamp(3.8rem,8vw,8rem)/.88 "Noto Sans SC",sans-serif; letter-spacing: -.075em; text-transform: uppercase; }
+.hero h1 em { color: #147d64; font-family: "Space Mono",monospace; font-size: .58em; font-style: normal; letter-spacing: -.08em; }
+.heroGrid > div > p { max-width: 38rem; margin: 2rem 0 0; color: #536059; font-size: 1rem; line-height: 1.8; }
+.directoryNote { display: grid; grid-template-columns: 1fr auto; gap: .7rem 1rem; padding: 1.25rem; border: 1px solid #14211c; background: rgba(255,253,246,.72); box-shadow: .45rem .45rem 0 #14211c; }
+.directoryNote > span { align-self: center; font: 700 .62rem "Space Mono",monospace; letter-spacing: .08em; text-transform: uppercase; }
+.directoryNote strong { color: #147d64; font: 700 3rem/1 "Space Mono",monospace; }
+.directoryNote p { grid-column: 1/-1; margin: .6rem 0 0; padding-top: .85rem; border-top: 1px dashed rgba(20,33,28,.3); color: #68736d; font-size: .75rem; line-height: 1.65; }
+.catalogSection { border-top: 1px solid #14211c; padding: clamp(4rem,7vw,6.5rem) 0 clamp(6rem,10vw,9rem); background: linear-gradient(rgba(20,33,28,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(20,33,28,.04) 1px,transparent 1px); background-size: 2rem 2rem; }
+
+.loadingHero, .loadingCatalog { width: min(100% - 3rem,88rem); margin: auto; }
+.loadingHero { display: grid; gap: 1.4rem; padding: 6rem 0; }
+.loadingCatalog { padding: 4rem 0 8rem; }
+.loadingLine, .loadingTitle, .loadingCopy, .loadingControls, .loadingCard { display: block; background: linear-gradient(90deg,#e1dccf 20%,#f8f4e9 50%,#e1dccf 80%); background-size: 220% 100%; animation: shimmer 1.5s linear infinite; }
+.loadingLine { width: 9rem; height: 1rem; }
+.loadingTitle { width: min(42rem,85%); height: 8rem; }
+.loadingCopy { width: min(30rem,70%); height: 1.2rem; }
+.loadingControls { height: 10rem; border: 1px solid rgba(20,33,28,.2); }
+.loadingGrid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 1rem; margin-top: 1.5rem; }
+.loadingCard { min-height: 25rem; border: 1px solid rgba(20,33,28,.2); }
+
+@keyframes shimmer { to { background-position: -220% 0; } }
+@media (max-width: 900px) {
+  .heroGrid { grid-template-columns: 1fr; }
+  .directoryNote { max-width: 30rem; }
+  .loadingGrid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 560px) {
+  .hero, .loadingHero, .loadingCatalog { width: min(100% - 1.5rem,88rem); }
+  .hero { padding: 4rem 0 5rem; }
+  .hero h1 { font-size: clamp(3.2rem,18vw,5.4rem); }
+  .loadingGrid { grid-template-columns: 1fr; }
+  .loadingTitle { height: 5.5rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .loadingLine, .loadingTitle, .loadingCopy, .loadingControls, .loadingCard { animation: none; }
+}
