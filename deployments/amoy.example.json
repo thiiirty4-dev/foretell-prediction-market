@@ -1,0 +1,10 @@
+{
+  "chainId": 80002,
+  "broadcast": false,
+  "sourceCommit": "UNSET",
+  "compiler": "0.8.28",
+  "optimizerRuns": 10000,
+  "deploymentBlock": null,
+  "contracts": { "conditionalTokens": null, "forecastTestUSD": null, "marketFactory": null, "testTreasury": null },
+  "roles": { "adminMultisig": null, "authorizer": null, "resolver": null, "resolutionAdmin": null, "guardian": null }
+}

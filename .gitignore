@@ -1,0 +1,17 @@
+node_modules/
+.next/
+out/
+coverage/
+dist/
+.wrangler/
+.supabase/
+cache/
+broadcast/
+contracts/lib/
+contracts/out/
+.env
+.env.*
+!.env.example
+*.log
+*.tsbuildinfo
+.DS_Store

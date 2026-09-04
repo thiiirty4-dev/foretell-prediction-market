@@ -1,0 +1,1 @@
+"use client";import {PrivyProvider}from"@privy-io/react-auth";export function Providers({children}:{children:React.ReactNode}){const id=process.env.NEXT_PUBLIC_PRIVY_APP_ID;if(!id||id==="local-placeholder")return <>{children}</>;return <PrivyProvider appId={id} config={{loginMethods:["email","wallet"],appearance:{theme:"light",accentColor:"#147d64"}}}>{children}</PrivyProvider>}

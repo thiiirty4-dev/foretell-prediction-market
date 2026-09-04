@@ -1,0 +1,2 @@
+import { query } from "@/lib/db";import { apiError,ok,requestId } from "@/lib/http";
+export async function GET(request:Request){try{const rows=await query(`select user_id,display_name,net_profit::text,settled_markets,as_of_block::text from leaderboard_current order by net_profit desc,settled_markets desc,user_id asc limit 100`);return ok(rows,{requestId:requestId(request),source:"settled_market_projection"});}catch(error){return apiError(request,error);}}

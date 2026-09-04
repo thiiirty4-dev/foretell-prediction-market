@@ -1,0 +1,14 @@
+begin;
+do $$ begin create role forecast_app nologin; exception when duplicate_object then null; end $$;
+do $$ begin create role forecast_indexer nologin; exception when duplicate_object then null; end $$;
+grant usage on schema public to forecast_app,forecast_indexer;
+grant select,insert,update on app_users,user_wallets,market_drafts,market_reviews,publication_authorizations,orders,resolution_evidence,challenges to forecast_app;
+grant select on markets,market_outcomes,trades,market_reserves,positions,asset_balances,probability_history,leaderboard_snapshots,indexer_checkpoints,raw_events,indexed_blocks,transaction_receipts,audit_log to forecast_app;
+grant select,insert,update on all tables in schema public to forecast_indexer;
+revoke update,delete on raw_events,transaction_receipts,order_state_history,audit_log from forecast_app,forecast_indexer;
+revoke insert,update,delete on trades,positions,asset_balances,market_reserves,probability_history,leaderboard_snapshots,indexed_blocks,indexer_checkpoints from forecast_app;
+alter table app_users enable row level security; alter table user_wallets enable row level security; alter table orders enable row level security;
+create policy app_users_self_select on app_users for select using(id=current_setting('app.user_id',true)::uuid);
+create policy wallets_self_select on user_wallets for select using(user_id=current_setting('app.user_id',true)::uuid);
+create policy orders_self_select on orders for select using(user_id=current_setting('app.user_id',true)::uuid);
+commit;

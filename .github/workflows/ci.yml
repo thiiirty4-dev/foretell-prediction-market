@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  application:
+    name: Application quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type-check
+        run: npm run typecheck
+
+      - name: Run application tests
+        run: npm test
+
+  foundry:
+    name: Foundry fuzz and invariants
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      FOUNDRY_FUZZ_RUNS: 2048
+      FOUNDRY_INVARIANT_RUNS: 256
+      FOUNDRY_INVARIANT_DEPTH: 128
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install Solidity dependencies
+        run: npm ci
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v1.8.1
+          cache: true
+
+      - name: Show Forge version
+        run: forge --version
+
+      - name: Check Solidity formatting
+        working-directory: contracts
+        run: forge fmt --check
+
+      - name: Build contracts and report sizes
+        working-directory: contracts
+        run: forge build --sizes
+
+      - name: Run unit, fuzz, and invariant tests
+        working-directory: contracts
+        run: forge test -vvv

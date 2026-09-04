@@ -1,0 +1,283 @@
+.header {
+  position: sticky;
+  z-index: 50;
+  top: 0;
+  border-bottom: 1px solid var(--line);
+  background: rgb(255 255 255 / 94%);
+  backdrop-filter: blur(16px);
+}
+
+.inner {
+  display: grid;
+  grid-template-columns: auto auto minmax(190px, 1fr) auto;
+  gap: clamp(18px, 2.6vw, 38px);
+  align-items: center;
+  width: min(100% - 40px, 1440px);
+  min-height: 68px;
+  margin: 0 auto;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink);
+  font-size: .86rem;
+  font-weight: 800;
+  letter-spacing: -.025em;
+  white-space: nowrap;
+}
+
+.mark {
+  position: relative;
+  display: block;
+  width: 27px;
+  height: 27px;
+  overflow: hidden;
+  border-radius: 7px;
+  background: var(--ink);
+}
+
+.mark i {
+  position: absolute;
+  width: 13px;
+  height: 13px;
+  border-radius: 3px;
+}
+
+.mark i:first-child {
+  top: 5px;
+  left: 5px;
+  background: #47d7a1;
+}
+
+.mark i:last-child {
+  right: 4px;
+  bottom: 4px;
+  border: 2px solid #fff;
+  background: transparent;
+}
+
+.navigation {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.navigation a,
+.accountLink,
+.activeAccount {
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: var(--ink-muted);
+  font-size: .78rem;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: color 150ms ease, background 150ms ease;
+}
+
+.navigation a:hover,
+.accountLink:hover {
+  color: var(--ink);
+  background: var(--surface-muted);
+}
+
+.navigation .activeLink,
+.activeAccount {
+  color: var(--green-strong);
+  background: var(--green-soft);
+}
+
+.search {
+  position: relative;
+  display: flex;
+  width: 100%;
+  max-width: 430px;
+  justify-self: center;
+  align-items: center;
+}
+
+.search input {
+  height: 38px;
+  padding: 0 38px 0 36px;
+  border-color: var(--line);
+  border-radius: 9px;
+  background: var(--surface-muted);
+  font-size: .8rem;
+}
+
+.search input:focus {
+  border-color: var(--green);
+  background: var(--surface);
+}
+
+.searchIcon {
+  position: absolute;
+  z-index: 1;
+  left: 13px;
+  width: 12px;
+  height: 12px;
+  border: 1.7px solid var(--ink-muted);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.searchIcon::after {
+  position: absolute;
+  right: -4px;
+  bottom: -2px;
+  width: 5px;
+  height: 1.5px;
+  background: var(--ink-muted);
+  content: "";
+  transform: rotate(45deg);
+}
+
+.search kbd {
+  position: absolute;
+  right: 10px;
+  display: grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  color: var(--ink-muted);
+  background: var(--surface);
+  font: 700 10px var(--font-mono);
+}
+
+.actions {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  justify-self: end;
+}
+
+.network {
+  display: inline-flex;
+  gap: 7px;
+  align-items: center;
+  margin-right: 3px;
+  color: var(--ink-muted);
+  font: 700 10px var(--font-mono);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.network i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 0 3px var(--green-soft);
+}
+
+.walletButton {
+  min-height: 38px;
+  border: 1px solid var(--ink);
+  border-radius: 9px;
+  padding: 0 13px;
+  color: #fff;
+  background: var(--ink);
+  font-size: .72rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.walletButton:disabled {
+  opacity: 1;
+}
+
+.brand:focus-visible,
+.navigation a:focus-visible,
+.accountLink:focus-visible,
+.activeAccount:focus-visible,
+.walletButton:focus-visible {
+  outline: 3px solid rgb(8 122 85 / 22%);
+  outline-offset: 2px;
+}
+
+@media (max-width: 1120px) {
+  .inner {
+    grid-template-columns: auto auto minmax(160px, 1fr) auto;
+    gap: 14px;
+  }
+
+  .network {
+    display: none;
+  }
+
+  .navigation a {
+    padding-inline: 7px;
+  }
+}
+
+@media (max-width: 900px) {
+  .inner {
+    grid-template-columns: auto 1fr auto;
+    gap: 8px 14px;
+    padding: 10px 0;
+  }
+
+  .brand {
+    grid-column: 1;
+  }
+
+  .search {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .actions {
+    grid-column: 3;
+  }
+
+  .navigation {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    overflow-x: auto;
+    padding-top: 2px;
+    scrollbar-width: none;
+  }
+
+  .navigation::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (max-width: 620px) {
+  .inner {
+    grid-template-columns: 1fr auto;
+    width: min(100% - 24px, 1440px);
+  }
+
+  .brand {
+    grid-column: 1;
+  }
+
+  .actions {
+    grid-column: 2;
+  }
+
+  .search {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    max-width: none;
+  }
+
+  .navigation {
+    grid-row: 3;
+  }
+
+  .accountLink,
+  .activeAccount {
+    display: none;
+  }
+
+  .walletButton {
+    min-height: 34px;
+    padding-inline: 10px;
+    font-size: .68rem;
+  }
+}

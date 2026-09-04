@@ -1,0 +1,463 @@
+.discovery {
+  width: min(100% - 40px, 1340px);
+  margin: 0 auto;
+  padding: 76px 0 100px;
+}
+
+.collection {
+  scroll-margin-top: 150px;
+}
+
+.collection + .collection {
+  margin-top: 80px;
+}
+
+.sectionHeading {
+  display: flex;
+  gap: 32px;
+  align-items: end;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--line-strong);
+}
+
+.sectionHeading h2 {
+  margin: 4px 0 0;
+  font-size: clamp(1.8rem, 3vw, 2.8rem);
+  line-height: 1.1;
+  letter-spacing: -.055em;
+}
+
+.sectionHeading p {
+  max-width: 430px;
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: .86rem;
+  line-height: 1.65;
+}
+
+.sectionIndex {
+  color: var(--green);
+  font: 700 10px var(--font-mono);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.trendingGrid,
+.newGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.marketGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.card {
+  --card-delay: 0ms;
+  position: relative;
+  display: flex;
+  min-width: 0;
+  min-height: 330px;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 18px;
+  color: var(--ink);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  animation: card-in 420ms var(--card-delay) cubic-bezier(.2, .7, .2, 1) both;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.card::after {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  background: transparent;
+  content: "";
+  transition: background 160ms ease;
+}
+
+.card:hover {
+  border-color: #9eb1a6;
+  box-shadow: 0 15px 38px rgb(17 26 22 / 10%);
+  transform: translateY(-3px);
+}
+
+.card:hover::after,
+.featuredCard::after {
+  background: var(--green);
+}
+
+.card:focus-visible {
+  outline: 3px solid rgb(8 122 85 / 24%);
+  outline-offset: 3px;
+}
+
+.featuredCard {
+  border-color: #afc6b9;
+  background: #fcfffd;
+}
+
+.cardTopline {
+  display: flex;
+  min-height: 24px;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.category,
+.status {
+  font: 700 9px var(--font-mono);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.category {
+  border-radius: 6px;
+  padding: 5px 7px;
+  color: var(--green-strong);
+  background: var(--green-soft);
+}
+
+.status {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+
+.status::before {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  content: "";
+}
+
+.statusOpen::before {
+  background: var(--green);
+}
+
+.statusClosing::before {
+  background: var(--red);
+}
+
+.statusNew::before {
+  background: var(--amber);
+}
+
+.card h3 {
+  min-height: 3.9em;
+  margin: 17px 0 18px;
+  font-size: clamp(1.02rem, 1.5vw, 1.25rem);
+  font-weight: 700;
+  line-height: 1.42;
+  letter-spacing: -.027em;
+}
+
+.signalRow {
+  display: grid;
+  grid-template-columns: auto minmax(90px, 1fr);
+  gap: 16px;
+  align-items: end;
+  min-height: 74px;
+  margin-top: auto;
+}
+
+.primaryProbability {
+  display: grid;
+  gap: 1px;
+}
+
+.primaryProbability > span {
+  color: var(--ink-muted);
+  font: 700 9px var(--font-mono);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.primaryProbability strong {
+  color: var(--green);
+  font: 700 30px/1.1 var(--font-mono);
+  letter-spacing: -.07em;
+}
+
+.primaryProbability small {
+  font: 700 9px var(--font-mono);
+}
+
+.changeUp {
+  color: var(--green);
+}
+
+.changeDown {
+  color: var(--red);
+}
+
+.changeFlat {
+  color: var(--ink-muted);
+}
+
+.sparkline {
+  width: 100%;
+  height: 54px;
+  overflow: visible;
+}
+
+.sparklineLine {
+  fill: none;
+  stroke: var(--green);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.outcomes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+  margin-top: 15px;
+}
+
+.outcomes > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 8px;
+  padding: 9px 10px;
+}
+
+.outcomes span {
+  font: 700 9px var(--font-mono);
+}
+
+.outcomes strong {
+  font: 700 12px var(--font-mono);
+}
+
+.yesOutcome {
+  color: var(--green-strong);
+  background: var(--green-soft);
+}
+
+.noOutcome {
+  color: var(--red-strong);
+  background: var(--red-soft);
+}
+
+.marketFacts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 15px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.marketFacts div {
+  min-width: 0;
+}
+
+.marketFacts dt {
+  margin-bottom: 4px;
+  color: var(--ink-muted);
+  font: 700 9px var(--font-mono);
+  text-transform: uppercase;
+}
+
+.marketFacts dd {
+  margin: 0;
+  overflow: hidden;
+  font: 700 10px var(--font-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cardFooter {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+  color: var(--ink-muted);
+  font: 700 9px var(--font-mono);
+}
+
+.openMarket {
+  color: var(--green);
+  transition: transform 150ms ease;
+}
+
+.card:hover .openMarket {
+  transform: translateX(3px);
+}
+
+.controls {
+  display: grid;
+  gap: 11px;
+  margin-bottom: 20px;
+}
+
+.searchLabel {
+  position: relative;
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.searchLabel:focus-within {
+  border-color: var(--green);
+  outline: 3px solid rgb(8 122 85 / 13%);
+}
+
+.searchIcon {
+  position: relative;
+  width: 13px;
+  height: 13px;
+  flex: 0 0 auto;
+  margin-left: 15px;
+  border: 1.7px solid var(--ink-muted);
+  border-radius: 50%;
+}
+
+.searchIcon::after {
+  position: absolute;
+  right: -4px;
+  bottom: -2px;
+  width: 5px;
+  height: 1.5px;
+  background: var(--ink-muted);
+  content: "";
+  transform: rotate(45deg);
+}
+
+.searchLabel input {
+  min-width: 0;
+  flex: 1;
+  align-self: stretch;
+  border: 0;
+  padding: 0 14px;
+  background: transparent;
+  outline: 0;
+}
+
+.searchLabel kbd {
+  margin-right: 12px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 3px 6px;
+  color: var(--ink-muted);
+  background: var(--surface-muted);
+  font: 9px var(--font-mono);
+}
+
+.categories {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 3px;
+}
+
+.categories button {
+  min-height: 34px;
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 11px;
+  color: var(--ink-muted);
+  background: var(--surface);
+  font-size: .71rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.categories button:hover {
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+
+.categories .activeCategory {
+  border-color: var(--ink);
+  color: #fff;
+  background: var(--ink);
+}
+
+.emptyState {
+  display: grid;
+  min-height: 220px;
+  place-content: center;
+  gap: 6px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 14px;
+  color: var(--ink-muted);
+  background: var(--surface);
+  text-align: center;
+}
+
+.emptyState strong {
+  color: var(--ink);
+  font-size: 1.08rem;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(9px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 1040px) {
+  .marketGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .discovery {
+    width: min(100% - 24px, 1340px);
+    padding: 54px 0 70px;
+  }
+
+  .sectionHeading {
+    display: grid;
+    gap: 9px;
+  }
+
+  .trendingGrid,
+  .newGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .marketGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .card {
+    min-height: 312px;
+  }
+
+  .searchLabel kbd {
+    display: none;
+  }
+}

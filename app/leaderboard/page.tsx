@@ -1,0 +1,1 @@
+export default function Leaderboard(){return <main className="simple"><span className="eyebrow">LEADERBOARD / 排行榜</span><h1>以结算后的结果说话</h1><div className="leader"><div><b>01</b><span>等待第一位预测者</span><strong>0.000000 fUSD</strong></div></div><p className="note">仅统计已结算市场净收益；同收益时按参与数、用户 ID 稳定排序。</p></main>}

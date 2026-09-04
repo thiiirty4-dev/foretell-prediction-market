@@ -1,0 +1,15 @@
+[profile.default]
+src = "src"
+test = "test"
+script = "script"
+out = "out"
+libs = ["../node_modules"]
+solc_version = "0.8.28"
+optimizer = true
+optimizer_runs = 10000
+auto_detect_remappings = false
+fuzz.runs = 2048
+invariant.runs = 256
+invariant.depth = 128
+invariant.fail_on_revert = false
+remappings = ["@openzeppelin/contracts/=../node_modules/@openzeppelin/contracts/"]

@@ -1,0 +1,188 @@
+openapi: 3.1.0
+info: { title: Foretell Lab API, version: 1.0.0, description: Polygon Amoy test-only prediction market API }
+servers: [{ url: /api/v1 }]
+security: [{ bearerAuth: [] }]
+paths:
+  /markets:
+    get:
+      security: []
+      summary: Search and list MVP markets
+      parameters:
+        - { name: cursor, in: query, schema: { type: string } }
+        - { name: search, in: query, schema: { type: string, maxLength: 120 } }
+        - { name: category, in: query, schema: { type: string, maxLength: 48 } }
+        - { name: status, in: query, schema: { type: string, enum: [OPEN, CLOSED, PROPOSED, DISPUTED, RESOLVED, CANCELLED] } }
+        - { name: sort, in: query, schema: { type: string, enum: [trending, volume, newest, ending-soon], default: trending } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 50, default: 20 } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '400': { $ref: '#/components/responses/Error' } }
+    post: { summary: Create a database draft, parameters: [{ $ref: '#/components/parameters/RequestId' }], responses: { '201': { $ref: '#/components/responses/Success' }, '400': { $ref: '#/components/responses/Error' } } }
+  /markets/{id}:
+    get: { security: [], summary: Get market detail with outcomes and price history, parameters: [{ name: id, in: path, required: true, schema: { type: string, description: UUID or slug } }], responses: { '200': { $ref: '#/components/responses/Success' }, '400': { $ref: '#/components/responses/Error' }, '404': { $ref: '#/components/responses/Error' } } }
+  /markets/{id}/history:
+    get:
+      security: []
+      summary: Get YES and NO price history
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, description: UUID or slug } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 500, default: 200 } }
+      responses: { '200': { $ref: '#/components/responses/Success' }, '400': { $ref: '#/components/responses/Error' }, '404': { $ref: '#/components/responses/Error' } }
+  /orders:
+    get: { security: [], summary: List the current non-accounting Mock Wallet orders, responses: { '200': { $ref: '#/components/responses/Success' } } }
+    post:
+      security: []
+      summary: Create an append-only non-accounting Mock Order
+      parameters: [{ name: Idempotency-Key, in: header, required: true, schema: { type: string, maxLength: 128 } }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [marketId, outcome, amount]
+              properties:
+                marketId: { type: string, description: UUID or slug }
+                outcome: { type: string, enum: [YES, NO] }
+                amount: { type: string, pattern: '^[1-9][0-9]*$', description: Integer fUSD smallest units }
+      responses: { '201': { $ref: '#/components/responses/Success' }, '400': { $ref: '#/components/responses/Error' }, '404': { $ref: '#/components/responses/Error' }, '409': { $ref: '#/components/responses/Error' } }
+  /orders/{id}/submit:
+    post: { summary: Record and validate a wallet-broadcast transaction, parameters: [{ name: id, in: path, required: true, schema: { type: string, format: uuid } }], responses: { '200': { $ref: '#/components/responses/Success' } } }
+  /portfolio:
+    get: { summary: Get trusted confirmed balances and positions, responses: { '200': { $ref: '#/components/responses/Success' } } }
+  /leaderboard:
+    get: { security: [], summary: Get settled-market net-profit ranking, responses: { '200': { $ref: '#/components/responses/Success' } } }
+  /api/v1/portfolio:
+    get:
+      summary: Read the current mock wallet simulation portfolio
+      description: Returns a PostgreSQL projection derived only from append-only simulation orders. It is not an on-chain balance or position.
+      security: []
+      responses:
+        '200':
+          description: Simulation portfolio
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, error, meta]
+                properties:
+                  data:
+                    type: object
+                    required: [mode, source, walletAddress, testnetOnly, hasMonetaryValue, totalCostBasis, totalPotentialPayout, positionCount, positions]
+                    properties:
+                      mode:
+                        type: string
+                        enum: [SIMULATION]
+                      source:
+                        type: string
+                        enum: [POSTGRES_SIMULATION_PROJECTION]
+                      walletAddress:
+                        type: string
+                      testnetOnly:
+                        type: boolean
+                        const: true
+                      hasMonetaryValue:
+                        type: boolean
+                        const: false
+                      totalCostBasis:
+                        type: string
+                        pattern: '^[0-9]+
+  securitySchemes: { bearerAuth: { type: http, scheme: bearer, bearerFormat: Privy access token } }
+  parameters: { RequestId: { name: X-Request-Id, in: header, required: false, schema: { type: string } } }
+  responses:
+    Success: { description: Unified success envelope, content: { application/json: { schema: { $ref: '#/components/schemas/Envelope' } } } }
+    Error: { description: Unified safe error envelope, content: { application/json: { schema: { $ref: '#/components/schemas/Envelope' } } } }
+  schemas:
+    Envelope: { type: object, required: [data,error,meta], properties: { data: {}, error: { anyOf: [{ type: 'null' }, { type: object, required: [code,message], properties: { code: { type: string }, message: { type: string }, details: {} } }] }, meta: { type: object, required: [requestId], properties: { requestId: { type: string }, asOfBlock: { type: string }, confirmedAt: { type: string, format: date-time }, source: { type: string }, stale: { type: boolean }, nextCursor: { anyOf: [{type: string},{type: 'null'}] } } } } }
+
+                      totalPotentialPayout:
+                        type: string
+                        pattern: '^[0-9]+
+  securitySchemes: { bearerAuth: { type: http, scheme: bearer, bearerFormat: Privy access token } }
+  parameters: { RequestId: { name: X-Request-Id, in: header, required: false, schema: { type: string } } }
+  responses:
+    Success: { description: Unified success envelope, content: { application/json: { schema: { $ref: '#/components/schemas/Envelope' } } } }
+    Error: { description: Unified safe error envelope, content: { application/json: { schema: { $ref: '#/components/schemas/Envelope' } } } }
+  schemas:
+    Envelope: { type: object, required: [data,error,meta], properties: { data: {}, error: { anyOf: [{ type: 'null' }, { type: object, required: [code,message], properties: { code: { type: string }, message: { type: string }, details: {} } }] }, meta: { type: object, required: [requestId], properties: { requestId: { type: string }, asOfBlock: { type: string }, confirmedAt: { type: string, format: date-time }, source: { type: string }, stale: { type: boolean }, nextCursor: { anyOf: [{type: string},{type: 'null'}] } } } } }
+
+                      positionCount:
+                        type: integer
+                        minimum: 0
+                      positions:
+                        type: array
+                        items:
+                          type: object
+                          required: [marketId, marketSlug, marketQuestion, marketStatus, yesQuantity, noQuantity, costBasis, potentialPayout, lastOrderId, updatedAt]
+                          properties:
+                            marketId:
+                              type: string
+                              format: uuid
+                            marketSlug:
+                              type: string
+                            marketQuestion:
+                              type: string
+                            marketStatus:
+                              type: string
+                            yesQuantity:
+                              type: string
+                              pattern: '^[0-9]+
+  securitySchemes: { bearerAuth: { type: http, scheme: bearer, bearerFormat: Privy access token } }
+  parameters: { RequestId: { name: X-Request-Id, in: header, required: false, schema: { type: string } } }
+  responses:
+    Success: { description: Unified success envelope, content: { application/json: { schema: { $ref: '#/components/schemas/Envelope' } } } }
+    Error: { description: Unified safe error envelope, content: { application/json: { schema: { $ref: '#/components/schemas/Envelope' } } } }
+  schemas:
+    Envelope: { type: object, required: [data,error,meta], properties: { data: {}, error: { anyOf: [{ type: 'null' }, { type: object, required: [code,message], properties: { code: { type: string }, message: { type: string }, details: {} } }] }, meta: { type: object, required: [requestId], properties: { requestId: { type: string }, asOfBlock: { type: string }, confirmedAt: { type: string, format: date-time }, source: { type: string }, stale: { type: boolean }, nextCursor: { anyOf: [{type: string},{type: 'null'}] } } } } }
+
+                            noQuantity:
+                              type: string
+                              pattern: '^[0-9]+
+  securitySchemes: { bearerAuth: { type: http, scheme: bearer, bearerFormat: Privy access token } }
+  parameters: { RequestId: { name: X-Request-Id, in: header, required: false, schema: { type: string } } }
+  responses:
+    Success: { description: Unified success envelope, content: { application/json: { schema: { $ref: '#/components/schemas/Envelope' } } } }
+    Error: { description: Unified safe error envelope, content: { application/json: { schema: { $ref: '#/components/schemas/Envelope' } } } }
+  schemas:
+    Envelope: { type: object, required: [data,error,meta], properties: { data: {}, error: { anyOf: [{ type: 'null' }, { type: object, required: [code,message], properties: { code: { type: string }, message: { type: string }, details: {} } }] }, meta: { type: object, required: [requestId], properties: { requestId: { type: string }, asOfBlock: { type: string }, confirmedAt: { type: string, format: date-time }, source: { type: string }, stale: { type: boolean }, nextCursor: { anyOf: [{type: string},{type: 'null'}] } } } } }
+
+                            costBasis:
+                              type: string
+                              pattern: '^[0-9]+
+  securitySchemes: { bearerAuth: { type: http, scheme: bearer, bearerFormat: Privy access token } }
+  parameters: { RequestId: { name: X-Request-Id, in: header, required: false, schema: { type: string } } }
+  responses:
+    Success: { description: Unified success envelope, content: { application/json: { schema: { $ref: '#/components/schemas/Envelope' } } } }
+    Error: { description: Unified safe error envelope, content: { application/json: { schema: { $ref: '#/components/schemas/Envelope' } } } }
+  schemas:
+    Envelope: { type: object, required: [data,error,meta], properties: { data: {}, error: { anyOf: [{ type: 'null' }, { type: object, required: [code,message], properties: { code: { type: string }, message: { type: string }, details: {} } }] }, meta: { type: object, required: [requestId], properties: { requestId: { type: string }, asOfBlock: { type: string }, confirmedAt: { type: string, format: date-time }, source: { type: string }, stale: { type: boolean }, nextCursor: { anyOf: [{type: string},{type: 'null'}] } } } } }
+
+                            potentialPayout:
+                              type: string
+                              pattern: '^[0-9]+
+  securitySchemes: { bearerAuth: { type: http, scheme: bearer, bearerFormat: Privy access token } }
+  parameters: { RequestId: { name: X-Request-Id, in: header, required: false, schema: { type: string } } }
+  responses:
+    Success: { description: Unified success envelope, content: { application/json: { schema: { $ref: '#/components/schemas/Envelope' } } } }
+    Error: { description: Unified safe error envelope, content: { application/json: { schema: { $ref: '#/components/schemas/Envelope' } } } }
+  schemas:
+    Envelope: { type: object, required: [data,error,meta], properties: { data: {}, error: { anyOf: [{ type: 'null' }, { type: object, required: [code,message], properties: { code: { type: string }, message: { type: string }, details: {} } }] }, meta: { type: object, required: [requestId], properties: { requestId: { type: string }, asOfBlock: { type: string }, confirmedAt: { type: string, format: date-time }, source: { type: string }, stale: { type: boolean }, nextCursor: { anyOf: [{type: string},{type: 'null'}] } } } } }
+
+                            lastOrderId:
+                              type: string
+                              format: uuid
+                            updatedAt:
+                              type: string
+                              format: date-time
+                  error:
+                    nullable: true
+                  meta:
+                    type: object
+        '503':
+          description: Simulation portfolio unavailable
+components:
+  securitySchemes: { bearerAuth: { type: http, scheme: bearer, bearerFormat: Privy access token } }
+  parameters: { RequestId: { name: X-Request-Id, in: header, required: false, schema: { type: string } } }
+  responses:
+    Success: { description: Unified success envelope, content: { application/json: { schema: { $ref: '#/components/schemas/Envelope' } } } }
+    Error: { description: Unified safe error envelope, content: { application/json: { schema: { $ref: '#/components/schemas/Envelope' } } } }
+  schemas:
+    Envelope: { type: object, required: [data,error,meta], properties: { data: {}, error: { anyOf: [{ type: 'null' }, { type: object, required: [code,message], properties: { code: { type: string }, message: { type: string }, details: {} } }] }, meta: { type: object, required: [requestId], properties: { requestId: { type: string }, asOfBlock: { type: string }, confirmedAt: { type: string, format: date-time }, source: { type: string }, stale: { type: boolean }, nextCursor: { anyOf: [{type: string},{type: 'null'}] } } } } }

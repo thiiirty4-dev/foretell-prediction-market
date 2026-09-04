@@ -1,0 +1,20 @@
+name: forecast-mvp
+
+services:
+  postgres:
+    image: postgres:17.6-alpine
+    environment:
+      POSTGRES_DB: forecast
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports: ["5432:5432"]
+    volumes:
+      - forecast_pg:/var/lib/postgresql/data
+      - ./db/local/001_roles.sql:/docker-entrypoint-initdb.d/001_roles.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d forecast"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+volumes:
+  forecast_pg:
